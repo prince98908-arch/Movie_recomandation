@@ -10,7 +10,7 @@ st.title("Movie Recommendation System 🎬")
 
 
 # Load precomputed similarity matrix
-similarity = pickle.load(open("similarity_final_20mb.pkl", "rb"))
+similarity = pickle.load(open("similarity_compressed_22mb.pkl", "rb"))
 
 # Function to fetch movie poster from TMDB API
 def fetch_poster(movie_id):
