@@ -1,5 +1,5 @@
 # app.py
-
+import gzip
 import streamlit as st
 import pandas as pd
 import pickle
@@ -10,7 +10,9 @@ st.title("Movie Recommendation System 🎬")
 
 
 # Load precomputed similarity matrix
-similarity = pickle.load(open("similarity_compressed_22mb.pkl", "rb"))
+# Compressed pickle file ko load karne ka sahi tarika
+with gzip.open("similarity_compressed_22mb.pkl", "rb") as f:
+    similarity = pickle.load(f)
 
 # Function to fetch movie poster from TMDB API
 def fetch_poster(movie_id):
