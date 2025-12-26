@@ -1,7 +1,7 @@
-numpy
+streamlit
 pandas
+numpy
 scikit-learn
 scipy
-astor
-streamlit
 joblib
+requests
