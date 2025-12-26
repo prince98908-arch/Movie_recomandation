@@ -3,5 +3,5 @@ pandas
 scikit-learn
 scipy
 astor
-streamlit     
-joblib      
+streamlit
+joblib
