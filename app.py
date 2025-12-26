@@ -1,49 +1,77 @@
-# app.py
-import gzip
 import streamlit as st
-import pandas as pd
 import pickle
+import joblib
 import requests
+import pandas as pd
+from scipy import sparse   # IMPORTANT for sparse pkl
 
-st.set_page_config(layout="wide")
-st.title("Movie Recommendation System 🎬")
+# =============================
+# CONFIG
+# =============================
+st.set_page_config(page_title="Movie Recommender", layout="wide")
 
+TMDB_API_KEY = "PUT_YOUR_TMDB_API_KEY_HERE"
 
-# Load precomputed similarity matrix
-# Compressed pickle file ko load karne ka sahi tarika
-with gzip.open("similarity_compressed_22mb.pkl", "rb") as f:
-    similarity = pickle.load(f)
+# =============================
+# LOAD FILES
+# =============================
+movies = pickle.load(open("movies.pkl", "rb"))
+similarity = joblib.load("similarity_compressed_22mb.pkl")
 
-# Function to fetch movie poster from TMDB API
+# =============================
+# FUNCTIONS
+# =============================
 def fetch_poster(movie_id):
-    api_key = "YOUR_TMDB_API_KEY"  # Replace with your TMDB API key
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}&language=en-US"
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}"
     data = requests.get(url).json()
-    if 'poster_path' in data and data['poster_path']:
-        full_path = "https://image.tmdb.org/t/p/w500/" + data['poster_path']
-        return full_path
+    poster_path = data.get("poster_path")
+    
+    if poster_path:
+        return "https://image.tmdb.org/t/p/w500/" + poster_path
     else:
-        return "https://via.placeholder.com/150"
+        return "https://via.placeholder.com/500x750?text=No+Image"
 
-# Recommendation function
-def recommend(movie_name):
-    movie_index = movies[movies['title'] == movie_name].index[0]
-    distances = list(enumerate(similarity[movie_index]))
-    movies_list = sorted(distances, reverse=True, key=lambda x: x[1])[1:6]  # top 5
+def recommend(movie):
+    index = movies[movies["title"] == movie].index[0]
+
+    # Sparse matrix safe conversion
+    if sparse.issparse(similarity):
+        distances = similarity[index].toarray().flatten()
+    else:
+        distances = similarity[index]
+
+    movie_list = sorted(
+        list(enumerate(distances)),
+        reverse=True,
+        key=lambda x: x[1]
+    )[1:6]
+
     recommended_movies = []
     recommended_posters = []
-    for i in movies_list:
+
+    for i in movie_list:
         movie_id = movies.iloc[i[0]].movie_id
         recommended_movies.append(movies.iloc[i[0]].title)
         recommended_posters.append(fetch_poster(movie_id))
+
     return recommended_movies, recommended_posters
 
-# Movie selection
-selected_movie = st.selectbox("Select a movie", movies['title'].values)
+# =============================
+# UI
+# =============================
+st.title("🎬 Movie Recommendation System")
 
-if st.button("Show Recommendations"):
+selected_movie = st.selectbox(
+    "Select a movie",
+    movies["title"].values
+)
+
+if st.button("Recommend"):
     names, posters = recommend(selected_movie)
+
     cols = st.columns(5)
-    for idx, col in enumerate(cols):
-        col.text(names[idx])
-        col.image(posters[idx])
+    for i in range(5):
+        with cols[i]:
+            st.text(names[i])
+            st.image(posters[i])
+
