@@ -8,8 +8,6 @@ import requests
 st.set_page_config(layout="wide")
 st.title("Movie Recommendation System 🎬")
 
-# Load movies data
-movies = pd.read_csv("movies.csv")  # aapka movies dataset CSV file
 
 # Load precomputed similarity matrix
 similarity = pickle.load(open("similarity_final_20mb.pkl", "rb"))
